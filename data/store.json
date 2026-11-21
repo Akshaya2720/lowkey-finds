@@ -1,1 +1,178 @@
-{"test":"hello","time":1795288917977}
+{
+  "init": true,
+  "rev": 1,
+  "settings": {
+    "whatsapp": "",
+    "instagram": "",
+    "email": "",
+    "shipping": 0,
+    "freeAbove": 0,
+    "categories": [
+      "Wipes",
+      "Teas",
+      "Bottoms",
+      "Accessories"
+    ],
+    "ticker": [
+      "Stay niche",
+      "New drops",
+      "Small batches",
+      "Lowkey finds"
+    ],
+    "shipNote": "We ship across India. Delivery time and payment details are shared when we confirm your order.",
+    "returnNote": "Exchange and return details are shared when we confirm your order.",
+    "adminId": "LOWKEY2026",
+    "adminHash": "7525602160886330"
+  },
+  "products": [
+    {
+      "id": "demo0",
+      "name": "Aloe Facial Wipes",
+      "category": "Wipes",
+      "price": 199,
+      "mrp": 249,
+      "desc": "Soft aloe-infused wipes. Pack of 30, gentle on skin.",
+      "sizes": [],
+      "stock": "in",
+      "tag": "new",
+      "images": [
+        "demo:wipes:0",
+        "demo:wipes:3"
+      ],
+      "createdAt": 1700000000000,
+      "demo": true
+    },
+    {
+      "id": "demo1",
+      "name": "Makeup Remover Wipes",
+      "category": "Wipes",
+      "price": 249,
+      "mrp": 0,
+      "desc": "Lifts makeup in one swipe. Pack of 25, fragrance free.",
+      "sizes": [],
+      "stock": "in",
+      "tag": "best",
+      "images": [
+        "demo:wipes:1",
+        "demo:wipes:4"
+      ],
+      "createdAt": 1699999999000,
+      "demo": true
+    },
+    {
+      "id": "demo2",
+      "name": "Masala Chai Blend",
+      "category": "Teas",
+      "price": 349,
+      "mrp": 449,
+      "desc": "Strong Assam with ginger, cardamom and clove. 100 g tin.",
+      "sizes": [],
+      "stock": "in",
+      "tag": "new",
+      "images": [
+        "demo:tea:2",
+        "demo:tea:5"
+      ],
+      "createdAt": 1699999998000,
+      "demo": true
+    },
+    {
+      "id": "demo3",
+      "name": "Jasmine Green Tea",
+      "category": "Teas",
+      "price": 399,
+      "mrp": 0,
+      "desc": "Light, floral whole-leaf green tea. 50 g tin.",
+      "sizes": [],
+      "stock": "in",
+      "tag": "best",
+      "images": [
+        "demo:tea:3",
+        "demo:tea:0"
+      ],
+      "createdAt": 1699999997000,
+      "demo": true
+    },
+    {
+      "id": "demo4",
+      "name": "Chamomile Calm",
+      "category": "Teas",
+      "price": 299,
+      "mrp": 0,
+      "desc": "Caffeine free evening blend. 25 tea bags.",
+      "sizes": [],
+      "stock": "in",
+      "tag": "new",
+      "images": [
+        "demo:tea:4",
+        "demo:tea:1"
+      ],
+      "createdAt": 1699999996000,
+      "demo": true
+    },
+    {
+      "id": "demo5",
+      "name": "Wide Leg Trousers",
+      "category": "Bottoms",
+      "price": 1399,
+      "mrp": 0,
+      "desc": "High rise, wide leg, falls straight to the floor.",
+      "sizes": [
+        "XS",
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "stock": "in",
+      "tag": "best",
+      "images": [
+        "demo:pants:5",
+        "demo:pants:2"
+      ],
+      "createdAt": 1699999995000,
+      "demo": true
+    },
+    {
+      "id": "demo6",
+      "name": "Parachute Cargos",
+      "category": "Bottoms",
+      "price": 1599,
+      "mrp": 1999,
+      "desc": "Lightweight cargo pants with a drawstring hem.",
+      "sizes": [
+        "XS",
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "stock": "in",
+      "tag": "",
+      "images": [
+        "demo:pants:0",
+        "demo:pants:3"
+      ],
+      "createdAt": 1699999994000,
+      "demo": true
+    },
+    {
+      "id": "demo7",
+      "name": "Everyday Tote",
+      "category": "Accessories",
+      "price": 899,
+      "mrp": 0,
+      "desc": "Structured tote that holds a laptop and a lunch.",
+      "sizes": [],
+      "stock": "in",
+      "tag": "new",
+      "images": [
+        "demo:bag:1",
+        "demo:bag:4"
+      ],
+      "createdAt": 1699999993000,
+      "demo": true
+    }
+  ],
+  "orders": []
+}
