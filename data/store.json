@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 1,
+  "rev": 2,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -25,6 +25,20 @@
     "adminHash": "7525602160886330"
   },
   "products": [
+    {
+      "id": "test_prod_1",
+      "name": "Realtime Velvet Cap",
+      "category": "Accessories",
+      "price": 499,
+      "mrp": 799,
+      "desc": "Soft velvet cap for real-time test.",
+      "stock": "in",
+      "tag": "new",
+      "images": [
+        "demo:bag:0"
+      ],
+      "createdAt": 1795289390142
+    },
     {
       "id": "demo0",
       "name": "Aloe Facial Wipes",
