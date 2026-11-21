@@ -1,0 +1,20 @@
+{
+  "name": "lowkey-finds",
+  "version": "1.0.0",
+  "description": "Curated, small batch boutique e-commerce storefront with real-time tracking, WhatsApp integration, admin controls, and strict customer privacy.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "ecommerce",
+    "storefront",
+    "boutique",
+    "whatsapp-shop",
+    "vercel",
+    "lowkey-finds"
+  ],
+  "author": "Akshaya2720",
+  "license": "MIT"
+}
