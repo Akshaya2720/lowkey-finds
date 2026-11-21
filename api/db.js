@@ -1,12 +1,14 @@
 // Lowkey Finds Serverless Storage Helper
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
-const DATA_FILE = path.join('/tmp', 'lowkey_store_data.json');
+const DATA_FILE = path.join(os.tmpdir(), 'lowkey_store_data.json');
 
 const DEF_ID = 'LOWKEY2026';
-// Hashes supporting 'lowkey2026', 'admin123', and original default
+// Hashes supporting 'dropshippinglowkey', 'lowkey2026', 'admin123', and legacy
 const ALLOWED_ADMIN_HASHES = [
+  '7525602160886330', // dropshippinglowkey
   '7557382909186229', // lowkey2026
   '2276666774655410', // admin123
   '1601588388549922'  // legacy
@@ -55,7 +57,7 @@ function getDefaultData() {
       shipNote: 'We ship across India. Delivery time and payment details are shared when we confirm your order.',
       returnNote: 'Exchange and return details are shared when we confirm your order.',
       adminId: 'LOWKEY2026',
-      adminHash: '7557382909186229' // lowkey2026
+      adminHash: '7525602160886330' // dropshippinglowkey
     },
     products: demoProducts,
     orders: []

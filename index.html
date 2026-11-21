@@ -679,8 +679,8 @@ function confirmDel(id){
   layer('<div class="ov" data-act="ovclose"><div class="modal sm" role="alertdialog" aria-modal="true"><h2 class="disp skew" style="font-size:2rem;margin:0 0 8px">Delete this piece?</h2><p>'+esc(p.name)+' will be removed from the shop.</p><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn ghost sm" data-act="close" data-first>Keep it</button><button class="btn danger sm" data-act="p-del-ok" data-id="'+id+'">Delete</button></div></div></div>');
 }
 /* ---------- admin session (one admin at a time) ---------- */
-var DEF_ID='LOWKEY2026',DEF_HASH='7557382909186229',tok=null,LK='lf_lock';
-var ALLOWED_DEF_HASHES=['7557382909186229','2276666774655410','1601588388549922'];
+var DEF_ID='LOWKEY2026',DEF_HASH='7525602160886330',tok=null,LK='lf_lock';
+var ALLOWED_DEF_HASHES=['7525602160886330','7557382909186229','2276666774655410','1601588388549922'];
 function hash(s){var h1=0xdeadbeef,h2=0x41c6ce57,c;s='lf|'+s;for(var i=0;i<s.length;i++){c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return String(4294967296*(2097151&h2)+(h1>>>0))}
 function lockRead(){try{return JSON.parse(localStorage.getItem(LK))}catch(e){return null}}
 function lockOther(){var l=lockRead();return !!(l&&l.tok!==tok&&Date.now()-l.ts<25000)}

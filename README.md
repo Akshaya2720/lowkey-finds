@@ -53,9 +53,9 @@ To manage your products and orders:
 
 1. Open your live website and scroll to the footer.
 2. Click **"Admin login"** at the bottom right.
-3. Enter the default credentials:
+3. Enter the credentials:
    - **User ID**: `LOWKEY2026`
-   - **Password**: `lowkey2026` *(or `admin123`)*
+   - **Password**: `dropshippinglowkey`
 4. Once logged in, an **Admin Bar** appears at the bottom of your screen:
    - **Orders**: View all orders, update fulfillment statuses, or delete orders.
    - **Add product**: Upload piece photos (compressed automatically) and set prices.

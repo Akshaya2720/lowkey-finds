@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
 
   const data = readData();
   const targetId = data.settings.adminId || DEF_ID;
-  const targetHash = data.settings.adminHash || '7557382909186229'; // lowkey2026 default
+  const targetHash = data.settings.adminHash || '7525602160886330'; // dropshippinglowkey default
 
   const inputId = String(id).trim();
   const inputHash = hash(String(password));
