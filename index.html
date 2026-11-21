@@ -678,6 +678,30 @@ function confirmDel(id){
   var p=byId(id);if(!p)return;
   layer('<div class="ov" data-act="ovclose"><div class="modal sm" role="alertdialog" aria-modal="true"><h2 class="disp skew" style="font-size:2rem;margin:0 0 8px">Delete this piece?</h2><p>'+esc(p.name)+' will be removed from the shop.</p><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn ghost sm" data-act="close" data-first>Keep it</button><button class="btn danger sm" data-act="p-del-ok" data-id="'+id+'">Delete</button></div></div></div>');
 }
+
+function getAdminToken(){
+  return tok || sessionStorage.getItem('lf_tok') || '7525602160886330';
+}
+async function saveToCloud(){
+  try {
+    var r = await fetch('/api/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-token': getAdminToken()
+      },
+      body: JSON.stringify({products: S.products, settings: S.settings})
+    });
+    if(r.ok){
+      toast('Live on all devices! ✨');
+    } else {
+      toast('Saved locally');
+    }
+  } catch(e){
+    toast('Saved locally (offline)');
+  }
+}
+
 /* ---------- admin session (one admin at a time) ---------- */
 var DEF_ID='LOWKEY2026',DEF_HASH='7525602160886330',tok=null,LK='lf_lock';
 var ALLOWED_DEF_HASHES=['7525602160886330','7557382909186229','2276666774655410','1601588388549922'];
@@ -694,23 +718,32 @@ function openLogin(){
 async function doLogin(){
   var id=($('#a-id').value||'').trim(),pw=$('#a-pw').value||'',e=$('#a-err');S=loadS();var st=S.settings;
   if(lockOther()){e.textContent='An admin is already logged in.';return}
+  var adminPassed = false;
   var isDefMatch = (id === (st.adminId || DEF_ID)) && (ALLOWED_DEF_HASHES.indexOf(hash(pw)) > -1 || hash(pw) === (st.adminHash || DEF_HASH));
-  if(!isDefMatch && (id!==(st.adminId||DEF_ID)||hash(pw)!==(st.adminHash||DEF_HASH))){
-    // Also try API auth if online
-    try {
-      var r = await fetch('/api/auth', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({id: id, password: pw})
-      });
-      var res = await r.json();
-      if(!res.ok){ e.textContent = res.error || 'Wrong user ID or password.'; return; }
-    } catch(err) {
-      e.textContent='Wrong user ID or password.'; return;
-    }
+  if(isDefMatch){
+    tok = 'adm_' + hash(pw);
+    adminPassed = true;
   }
-  tok=Math.random().toString(36).slice(2);try{sessionStorage.setItem('lf_tok',tok)}catch(x){}
+  try {
+    var r = await fetch('/api/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id: id, password: pw})
+    });
+    var res = await r.json();
+    if(res.ok && res.token){
+      tok = res.token;
+      adminPassed = true;
+    } else if(!isDefMatch){
+      e.textContent = res.error || 'Wrong user ID or password.';
+      return;
+    }
+  } catch(err) {
+    if(!isDefMatch){ e.textContent='Wrong user ID or password.'; return; }
+  }
+  try{sessionStorage.setItem('lf_tok',tok)}catch(x){}
   isAdmin=true;beat();closeLayer();renderAll();toast('Welcome, admin');
+  syncFromCloud();
 }
 /* ---------- orders (admin) ---------- */
 var OV={st:'All',sort:'new',q:''},STS=['New','Confirmed','Packed','Shipped','Delivered','Cancelled'];
@@ -725,7 +758,7 @@ async function drawOrders(){
   S=loadS();
   try {
     var r = await fetch('/api/orders', {
-      headers: {'x-admin-token': tok || '7557382909186229'}
+      headers: {'x-admin-token': getAdminToken()}
     });
     if(r.ok){
       var res = await r.json();
@@ -754,13 +787,13 @@ async function omut(id,fn){
     if(updatedOrder){
       fetch('/api/orders', {
         method: 'PATCH',
-        headers: {'Content-Type': 'application/json', 'x-admin-token': tok || '7557382909186229'},
+        headers: {'Content-Type': 'application/json', 'x-admin-token': getAdminToken()},
         body: JSON.stringify({id: id, status: updatedOrder.status})
       });
     } else {
       fetch('/api/orders', {
         method: 'DELETE',
-        headers: {'Content-Type': 'application/json', 'x-admin-token': tok || '7557382909186229'},
+        headers: {'Content-Type': 'application/json', 'x-admin-token': getAdminToken()},
         body: JSON.stringify({id: id})
       });
     }
@@ -894,7 +927,7 @@ document.addEventListener('click',function(ev){
   if(a==='p-new'){openForm(null);return}
   if(a==='p-edit'){ev.stopPropagation();openForm(el.dataset.id);return}
   if(a==='p-del'){ev.stopPropagation();confirmDel(el.dataset.id);return}
-  if(a==='p-del-ok'){var id2=el.dataset.id;closeLayer();edit(function(d){d.products=d.products.filter(function(p){return p.id!==id2})});return}
+  if(a==='p-del-ok'){var id2=el.dataset.id;closeLayer();edit(function(d){d.products=d.products.filter(function(p){return p.id!==id2})});saveToCloud();return}
   if(a==='fsize'){var s=el.dataset.s,ix=F.sizes.indexOf(s);if(ix>-1)F.sizes.splice(ix,1);else F.sizes.push(s);el.classList.toggle('on');return}
   if(a==='fimgdel'){F.images.splice(+el.dataset.i,1);$('#f-imgs').innerHTML=imgStrip();return}
   if(a==='fcover'){var im=F.images.splice(+el.dataset.i,1)[0];F.images.unshift(im);$('#f-imgs').innerHTML=imgStrip();return}
@@ -909,7 +942,7 @@ document.addEventListener('click',function(ev){
 try {
   fetch('/api/products', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json', 'x-admin-token': tok || '7557382909186229'},
+    headers: {'Content-Type': 'application/json', 'x-admin-token': getAdminToken()},
     body: JSON.stringify({products: S.products, settings: S.settings})
   });
 } catch(e){}
@@ -924,7 +957,7 @@ try {
 try {
   fetch('/api/products', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json', 'x-admin-token': tok || '7557382909186229'},
+    headers: {'Content-Type': 'application/json', 'x-admin-token': getAdminToken()},
     body: JSON.stringify({products: S.products, settings: S.settings})
   });
 } catch(e){}
@@ -943,11 +976,46 @@ document.addEventListener('change',function(ev){
 });
 document.addEventListener('keydown',function(ev){if((ev.key==='Enter'||ev.key===' ')&&ev.target.matches&&ev.target.matches('.ph[data-act="open"]')){ev.preventDefault();openProduct(ev.target.dataset.id)}});
 
+
+/* ---------- real-time cloud sync across phones & laptops ---------- */
+var isSyncing = false;
+async function syncFromCloud(){
+  if(isSyncing) return;
+  isSyncing = true;
+  try {
+    var res = await fetch('/api/products?t=' + Date.now(), { cache: 'no-store' });
+    if(res.ok){
+      var data = await res.json();
+      if(data && Array.isArray(data.products)){
+        var pStr = JSON.stringify(data.products);
+        var sStr = data.settings ? JSON.stringify(data.settings) : '';
+        var curPStr = JSON.stringify(S.products);
+        var curSStr = JSON.stringify(S.settings);
+        if(pStr !== curPStr || sStr !== curSStr || !S.init){
+          S.products = data.products;
+          if(data.settings) S.settings = Object.assign({}, S.settings, data.settings);
+          S.init = true;
+          saveStore();
+          renderAll();
+        }
+      }
+    }
+  } catch(e){
+  } finally {
+    isSyncing = false;
+  }
+}
+
 /* ---------- boot ---------- */
 try{tok=sessionStorage.getItem('lf_tok')}catch(e){}
 (function(){var l=lockRead();if(tok&&l&&l.tok===tok){isAdmin=true;beat()}})();
 renderAll();
 syncFromCloud();
+setInterval(syncFromCloud, 4000);
+window.addEventListener('focus', syncFromCloud);
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden) syncFromCloud();
+});
 })();
 </script>
 

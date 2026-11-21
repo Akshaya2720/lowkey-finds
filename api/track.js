@@ -1,11 +1,12 @@
 // api/track.js - Secure, Privacy-Preserving Customer Order Tracking
-const { readData } = require('./db');
+const { readDataAsync } = require('./db');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -27,7 +28,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Please enter a valid 10-digit phone number.' });
   }
 
-  const data = readData();
+  const data = await readDataAsync();
   const orders = data.orders || [];
 
   // Privacy Rule: Strict match on BOTH ref and customer phone number
@@ -42,7 +43,6 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // Return strictly sanitized details for this customer's order only
   return res.status(200).json({
     found: true,
     order: {
@@ -58,7 +58,6 @@ module.exports = async function handler(req, res) {
       c: {
         name: match.c.name,
         city: match.c.city
-        // Address and full phone are not returned to external API for maximum privacy
       }
     }
   });

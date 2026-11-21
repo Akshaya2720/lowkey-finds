@@ -1,18 +1,18 @@
 // api/orders.js - Secure Order Handling with Strict Customer Privacy
-const { readData, writeData, verifyAdmin } = require('./db');
+const { readDataAsync, writeData, verifyAdmin } = require('./db');
 
 module.exports = async function handler(req, res) {
-  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, x-admin-token, authorization');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const data = readData();
+  const data = await readDataAsync();
 
   // GET: STRICTLY ADMIN ONLY! No regular customer can list store orders.
   if (req.method === 'GET') {
@@ -70,10 +70,8 @@ module.exports = async function handler(req, res) {
 
       data.orders = data.orders || [];
       data.orders.unshift(newOrder);
-      writeData(data);
+      await writeData(data);
 
-      // Return ONLY this specific order reference and confirmation details.
-      // Privacy guaranteed: No other customer's order is returned or exposed.
       return res.status(201).json({
         ok: true,
         ref: newOrder.ref,
@@ -99,27 +97,27 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Order ID and new status required.' });
     }
 
-    const orderIndex = data.orders.findIndex(o => o.id === id);
+    const orderIndex = (data.orders || []).findIndex(o => o.id === id);
     if (orderIndex === -1) {
       return res.status(404).json({ error: 'Order not found.' });
     }
 
     const order = data.orders[orderIndex];
 
-    // Check if admin is updating
+    // Admin update
     if (verifyAdmin(req)) {
       order.status = status;
-      writeData(data);
+      await writeData(data);
       return res.status(200).json({ ok: true, order });
     }
 
-    // If not admin, allow customer to cancel ONLY IF they provide matching phone & order is New/Confirmed
+    // Customer self-cancellation
     if (status === 'Cancelled' && customerPhone) {
       const cleanPhone = String(customerPhone).replace(/\D/g, '').slice(-10);
       if (order.c.phone === cleanPhone && (order.status === 'New' || order.status === 'Confirmed')) {
         order.status = 'Cancelled';
         order.by = 'customer';
-        writeData(data);
+        await writeData(data);
         return res.status(200).json({ ok: true, order });
       }
     }
@@ -135,7 +133,7 @@ module.exports = async function handler(req, res) {
     const { id } = req.body || req.query || {};
     if (!id) return res.status(400).json({ error: 'Order ID required.' });
     data.orders = (data.orders || []).filter(o => o.id !== id);
-    writeData(data);
+    await writeData(data);
     return res.status(200).json({ ok: true });
   }
 

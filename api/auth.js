@@ -1,5 +1,5 @@
 // api/auth.js - Admin Authentication
-const { readData, hash, DEF_ID, ALLOWED_ADMIN_HASHES } = require('./db');
+const { readDataAsync, hash, DEF_ID, ALLOWED_ADMIN_HASHES } = require('./db');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -20,9 +20,9 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'User ID and password required.' });
   }
 
-  const data = readData();
+  const data = await readDataAsync();
   const targetId = data.settings.adminId || DEF_ID;
-  const targetHash = data.settings.adminHash || '7525602160886330'; // dropshippinglowkey default
+  const targetHash = data.settings.adminHash || '7525602160886330';
 
   const inputId = String(id).trim();
   const inputHash = hash(String(password));
