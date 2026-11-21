@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 2,
+  "rev": 3,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -25,6 +25,20 @@
     "adminHash": "7525602160886330"
   },
   "products": [
+    {
+      "id": "p_test_linen",
+      "name": "Linen Camp Shirt",
+      "category": "Top",
+      "price": 1299,
+      "mrp": 1799,
+      "desc": "Breezy boxy cut linen shirt.",
+      "stock": "in",
+      "tag": "new",
+      "images": [
+        "demo:dress:1"
+      ],
+      "createdAt": 1795289930793
+    },
     {
       "id": "test_prod_1",
       "name": "Realtime Velvet Cap",
