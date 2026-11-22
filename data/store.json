@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 15,
+  "rev": 16,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -227,31 +227,5 @@
       "demo": true
     }
   ],
-  "orders": [
-    {
-      "id": "omwrknnauvnrf",
-      "ref": "LF-RKNNAU",
-      "at": 1795335927222,
-      "status": "Confirmed",
-      "c": {
-        "name": "akssh",
-        "phone": "8850862568",
-        "addr": "Namminipurath House, Mezhathur, Thrithala, Palakkad.",
-        "city": "Pattambi",
-        "pin": "679534",
-        "note": ""
-      },
-      "items": [
-        {
-          "n": "Kit",
-          "s": "L",
-          "q": 1,
-          "pr": 1345
-        }
-      ],
-      "sub": 1345,
-      "ship": 0,
-      "total": 1345
-    }
-  ]
+  "orders": []
 }
