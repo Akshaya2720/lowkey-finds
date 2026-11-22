@@ -1,16 +1,15 @@
 {
   "init": true,
-  "rev": 42,
+  "rev": 43,
   "settings": {
     "whatsapp": "",
     "instagram": "",
     "email": "",
-    "shipping": 0,
-    "freeAbove": 0,
+    "shipping": 99,
+    "freeAbove": 999,
     "categories": [
-      "Wipes",
-      "Teas",
-      "Bottoms",
+      "Limited",
+      "Tees",
       "Accessories"
     ],
     "ticker": [
