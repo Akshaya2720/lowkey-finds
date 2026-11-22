@@ -329,6 +329,7 @@ var IC={
  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
  heart:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-9-9.2C1.6 7 4 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3 0 5.4 3 4 6.8C19 15.5 12 20 12 20z"/></svg>',
  bag:'<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>',
+ box:'<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
  menu:'<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
  star:'<svg class="star {c}" viewBox="0 0 100 100"><path d="M50 0C54 30 70 46 100 50 70 54 54 70 50 100 46 70 30 54 0 50 30 46 46 30 50 0Z"/></svg>'
 };
@@ -341,9 +342,16 @@ function toast(msg){var t=document.createElement('div');t.className='toast';t.se
 function cartCount(){return cart.reduce(function(n,i){return n+i.qty},0)}
 function saveCart(){ls.set('lf_cart',cart);updateBadges()}
 function updateBadges(){
-  var c=$('#bc'),w=$('#bw');
+  var c=$('#bc'),w=$('#bw'),bo=$('#bo');
   if(c){var n=cartCount();c.textContent=n;c.hidden=!n}
   if(w){w.textContent=wish.length;w.hidden=!wish.length}
+  if(bo){
+    var mos=ls.get('lf_my_orders',[])||[];
+    var active=mos.filter(function(x){return x&&x.status!=='Delivered'&&x.status!=='Cancelled'}).length;
+    var total=mos.length;
+    bo.textContent=active||total;
+    bo.hidden=!total;
+  }
 }
 function bump(id){var e=$(id);if(!e)return;e.classList.remove('bump');void e.offsetWidth;e.classList.add('bump')}
 function cats(){var s=cur().settings.categories||[];return s.filter(Boolean)}
@@ -388,6 +396,7 @@ function shell(){
   '<button class="ic" data-act="search" aria-label="Search">'+IC.search+'</button>'+
   '<button class="ic" data-act="wishlist" aria-label="Wishlist">'+IC.heart+'<span class="badge" id="bw" hidden>0</span></button>'+
   '<button class="ic" data-act="cart" aria-label="Open cart">'+IC.bag+'<span class="badge" id="bc" hidden>0</span></button>'+
+  '<button class="ic" data-act="track" aria-label="Orders" title="Orders & Tracking">'+IC.box+'<span class="badge" id="bo" hidden>0</span></button>'+
   '<button class="ic menu-btn" data-act="menu" aria-label="Menu" aria-expanded="false">'+IC.menu+'</button></div></div></header>'+
   '<div class="mq" aria-hidden="true"><div class="tr">'+tk+tk+'</div></div>'+
   '<main id="main">'+
@@ -562,23 +571,37 @@ function placeOrder(){
   //   • lf_my_orders  → this customer's private local list
   //   • /api/orders   → server-side, visible only to admin
 
-  // Post securely to /api/orders
+  // Post securely to /api/orders with exact id and ref
   try {
     fetch('/api/orders', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
+        id: ord.id,
+        ref: ord.ref,
         customer: o,
         items: ord.items,
         sub: ord.sub,
         ship: ord.ship,
         total: ord.total
       })
+    }).then(function(r){
+      if(r.ok) return r.json();
+    }).then(function(resData){
+      if(resData && resData.order){
+        var mos = ls.get('lf_my_orders', []);
+        var mi = mos.findIndex(function(x){return x.ref === ord.ref || x.id === ord.id});
+        if(mi > -1){
+          mos[mi] = Object.assign({}, mos[mi], resData.order);
+          ls.set('lf_my_orders', mos);
+          updateBadges();
+        }
+      }
     }).catch(function(err){ console.log('Offline/local mode:', err); });
   } catch(e){}
 
   try{sessionStorage.setItem('lf_track',JSON.stringify({ref:ord.ref,ph:o.phone.replace(/\D/g,'').slice(-10)}))}catch(e){}
-  cart=[];saveCart();
+  cart=[];saveCart();updateBadges();
 
   var st = cur().settings || {};
   var waNum = (st.whatsapp||'').replace(/\D/g,'');
@@ -832,6 +855,13 @@ function renderRecentOrdersHtml(list){
 function openTrack(){
   var t={};try{t=JSON.parse(sessionStorage.getItem('lf_track'))||{}}catch(e){}
   myOrders = ls.get('lf_my_orders', []);
+  if((!t.ref || !t.ph) && myOrders && myOrders.length){
+    var latest = myOrders[0];
+    if(latest && latest.ref){
+      t.ref = latest.ref;
+      t.ph = String(latest.c && latest.c.phone ? latest.c.phone : '').replace(/\D/g, '').slice(-10);
+    }
+  }
   var myOrdersHtml = '';
   if(myOrders && myOrders.length){
     myOrdersHtml = '<div style="margin-top:20px;border-top:2px dashed var(--line);padding-top:14px"><h4 class="disp" style="font-size:1.2rem;margin:0 0 10px">Your Recent Orders</h4><div id="my-orders-list" style="display:grid;gap:8px">'+
@@ -867,13 +897,14 @@ async function showTrack(){
         o = resData.order;
         // Keep customer's local storage up to date with live status
         myOrders = ls.get('lf_my_orders', []);
-        var idx = myOrders.findIndex(function(x){return x.ref===r});
+        var idx = myOrders.findIndex(function(x){return x.ref===r || x.id===o.id});
         if(idx > -1){
           myOrders[idx].status = o.status;
           if(o.by) myOrders[idx].by = o.by;
           ls.set('lf_my_orders', myOrders);
           var mlist = $('#my-orders-list');
           if(mlist) mlist.innerHTML = renderRecentOrdersHtml(myOrders);
+          updateBadges();
         }
       }
     }
@@ -882,22 +913,44 @@ async function showTrack(){
   // 2. Fallback: check local myOrders if network unavailable
   if(!o){
     myOrders = ls.get('lf_my_orders', []);
-    o = myOrders.find(function(x){return x.ref===r && x.c && x.c.phone && x.c.phone.replace(/\D/g,'').slice(-10)===p});
+    o = myOrders.find(function(x){
+      var xph = String(x.c && x.c.phone ? x.c.phone : '').replace(/\D/g,'').slice(-10);
+      return x.ref===r && xph===p;
+    });
   }
 
   // 3. Fallback: for admin testing on the same device, check S.orders
   if(!o && isAdmin && S && S.orders){
-    o = S.orders.find(function(x){return x.ref===r && x.c && x.c.phone && x.c.phone.replace(/\D/g,'').slice(-10)===p});
+    o = S.orders.find(function(x){
+      var xph = String(x.c && x.c.phone ? x.c.phone : '').replace(/\D/g,'').slice(-10);
+      return x.ref===r && xph===p;
+    });
   }
 
-  if(!o){box.innerHTML='<div class="empty">No order found with this order number and phone. Check your details.</div>';return}
+  if(!o){box.innerHTML='<div class="empty">No order found with this order number ('+esc(r)+') and phone. Check your details.</div>';return}
   try{sessionStorage.setItem('lf_track',JSON.stringify({ref:r,ph:p}))}catch(e){}
   var steps=['New','Confirmed','Packed','Shipped','Delivered'],ix=steps.indexOf(o.status),can=o.status==='New'||o.status==='Confirmed';
   var verifyReminder = (o.status==='New'||o.status==='Confirmed') ? '<div style="background:#FFF9C4;border:1px solid #FBC02D;color:#212121;padding:8px 10px;border-radius:6px;margin:8px 0;font-size:0.82rem;line-height:1.4"><b>\uD83D\uDCF8 Double Verification:</b> Please send a screenshot of this order on Instagram or WhatsApp.</div>' : '';
-  box.innerHTML='<div class="ord-c"><div class="r"><b>'+esc(o.ref)+'</b><span class="hint">'+new Date(o.at).toLocaleString('en-IN')+'</span></div>'+
-   (o.status==='Cancelled'?'<p class="notice">This order was cancelled.</p>':'<div style="display:grid;gap:8px;margin:12px 0">'+steps.map(function(s,i){var on=i<=ix;return '<div style="display:flex;gap:10px;align-items:center;font-weight:'+(i===ix?800:600)+';opacity:'+(on?1:.45)+'"><span style="width:16px;height:16px;border-radius:50%;border:2px solid var(--blue);background:'+(on?'var(--yellow)':'transparent')+'"></span>'+(s==='New'?'Order received':s==='Delivered'?'Delivered (completed)':s)+'</div>'}).join('')+'</div>')+
-   verifyReminder+
-   '<ul>'+o.items.map(function(it){return '<li>'+esc(it.n)+(it.s?' ('+esc(it.s)+')':'')+' &times; '+it.q+'</li>'}).join('')+'</ul><div class="r"><b>Total '+inr(o.total)+'</b>'+(can?'<button class="btn danger sm" data-act="ocancel" data-id="'+o.id+'" data-ref="'+esc(o.ref)+'" data-ph="'+esc((o.c&&o.c.phone)||p)+'">Cancel order</button>':'')+'</div>'+((o.status==='Packed'||o.status==='Shipped')?'<p class="hint">This order is already packed, so it cannot be cancelled here. Contact the shop.</p>':'')+'</div>';
+  
+  var statusColors = {'New':'#0149AB','Confirmed':'#0149AB','Packed':'#E65100','Shipped':'#0277BD','Delivered':'#2E7D32','Cancelled':'#C62828'};
+  var curColor = statusColors[o.status] || '#0149AB';
+  var statusBadge = '<span class="adm-pill" style="font-size:0.85rem;font-weight:800;background:'+curColor+';color:#fff;padding:4px 10px;border-radius:6px;letter-spacing:0.3px">'+esc(o.status)+'</span>';
+
+  box.innerHTML='<div class="ord-c">'+
+    '<div class="r" style="align-items:center;flex-wrap:wrap;gap:8px"><b>'+esc(o.ref)+'</b> '+statusBadge+'<span class="hint">'+new Date(o.at).toLocaleString('en-IN')+'</span></div>'+
+    (o.by ? '<p style="color:var(--danger);font-size:0.85rem;margin:4px 0 8px;font-weight:700">Cancelled by '+esc(o.by)+'</p>' : '')+
+    (o.status==='Cancelled' ? '<p class="notice" style="color:var(--danger);font-weight:700;margin:10px 0">This order was cancelled.</p>' : 
+      '<div style="display:grid;gap:8px;margin:12px 0">'+steps.map(function(s,i){
+        var on=i<=ix;
+        return '<div style="display:flex;gap:10px;align-items:center;font-weight:'+(i===ix?800:600)+';opacity:'+(on?1:.45)+'">'+
+          '<span style="width:16px;height:16px;border-radius:50%;border:2px solid var(--blue);background:'+(on?'var(--yellow)':'transparent')+'"></span>'+
+          (s==='New'?'Order received':s==='Delivered'?'Delivered (completed)':s)+
+          (i===ix ? ' <span style="font-size:0.75rem;background:var(--yellow);color:var(--blue);padding:1px 6px;border-radius:4px;font-weight:800;margin-left:4px">CURRENT</span>' : '')+
+        '</div>';
+      }).join('')+'</div>'
+    )+
+    verifyReminder+
+    '<ul>'+o.items.map(function(it){return '<li>'+esc(it.n)+(it.s?' ('+esc(it.s)+')':'')+' &times; '+it.q+'</li>'}).join('')+'</ul><div class="r"><b>Total '+inr(o.total)+'</b>'+(can?'<button class="btn danger sm" data-act="ocancel" data-id="'+(o.id||'')+'" data-ref="'+esc(o.ref)+'" data-ph="'+esc((o.c&&o.c.phone)||p)+'">Cancel order</button>':'')+'</div>'+((o.status==='Packed'||o.status==='Shipped')?'<p class="hint" style="color:#d84315;font-weight:600;margin-top:8px">This order is '+esc(o.status.toLowerCase())+', so it cannot be cancelled online. Contact the shop.</p>':'')+'</div>';
 }
 setInterval(function(){if(isAdmin)beat();syncLogin()},8000);
 window.addEventListener('storage',function(e){
@@ -959,25 +1012,32 @@ document.addEventListener('click',function(ev){
     if(confirm('Cancel this order?')){
       var oid = el.dataset.id, oref = el.dataset.ref, oph = el.dataset.ph || ($('#t-ph') ? $('#t-ph').value.replace(/\D/g, '').slice(-10) : '');
       if(isAdmin){
-        omut(oid, function(l, i){ l[i].status = 'Cancelled'; });
+        omut(oid, function(l, i){ l[i].status = 'Cancelled'; l[i].by = 'admin'; });
         toast('Order cancelled');
         showTrack();
       } else {
         fetch('/api/orders', {
           method: 'PATCH',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({id: oid, status: 'Cancelled', customerPhone: oph})
+          body: JSON.stringify({id: oid, ref: oref, status: 'Cancelled', customerPhone: oph})
         }).then(function(r){
-          if(r.ok){
+          return r.json().then(function(d){ return {ok: r.ok, data: d}; });
+        }).then(function(res){
+          if(res.ok){
             var mos = ls.get('lf_my_orders', []);
-            var ci = mos.findIndex(function(x){return x.id === oid || x.ref === oref});
-            if(ci > -1){ mos[ci].status = 'Cancelled'; mos[ci].by = 'customer'; ls.set('lf_my_orders', mos); }
-            toast('Order cancelled');
+            var ci = mos.findIndex(function(x){return (oid && x.id === oid) || (oref && x.ref === oref)});
+            if(ci > -1){
+              mos[ci].status = 'Cancelled';
+              mos[ci].by = 'customer';
+              ls.set('lf_my_orders', mos);
+            }
+            toast('Order cancelled successfully');
             showTrack();
+            updateBadges();
           } else {
-            toast('Could not cancel order');
+            toast((res.data && res.data.error) ? res.data.error : 'Could not cancel order');
           }
-        }).catch(function(){ toast('Could not cancel order'); });
+        }).catch(function(){ toast('Network error: could not cancel order'); });
       }
     }
     return;

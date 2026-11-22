@@ -43,9 +43,17 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Valid 10-digit phone number is required.' });
       }
 
-      const ref = 'LF-' + Date.now().toString(36).toUpperCase().slice(-6);
+      // Preserve client-generated reference & id if provided to keep local and server IDs identical
+      const ref = (body.ref && typeof body.ref === 'string' && /^LF-[A-Z0-9]+$/i.test(body.ref.trim()))
+        ? body.ref.trim().toUpperCase()
+        : ('LF-' + Date.now().toString(36).toUpperCase().slice(-6));
+
+      const orderId = (body.id && typeof body.id === 'string' && body.id.trim().length > 3)
+        ? body.id.trim()
+        : ('o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+
       const newOrder = {
-        id: 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        id: orderId,
         ref: ref,
         at: Date.now(),
         status: 'New',
@@ -69,20 +77,18 @@ module.exports = async function handler(req, res) {
       };
 
       data.orders = data.orders || [];
-      data.orders.unshift(newOrder);
+      const existingIdx = data.orders.findIndex(o => o.id === newOrder.id || o.ref === newOrder.ref);
+      if (existingIdx > -1) {
+        data.orders[existingIdx] = newOrder;
+      } else {
+        data.orders.unshift(newOrder);
+      }
       await writeData(data);
 
       return res.status(201).json({
         ok: true,
         ref: newOrder.ref,
-        order: {
-          id: newOrder.id,
-          ref: newOrder.ref,
-          at: newOrder.at,
-          status: newOrder.status,
-          total: newOrder.total,
-          items: newOrder.items
-        }
+        order: newOrder
       });
     } catch (err) {
       console.error('Error creating order:', err);
@@ -92,12 +98,15 @@ module.exports = async function handler(req, res) {
 
   // PATCH: Admin updating order status OR customer cancelling their own new order
   if (req.method === 'PATCH') {
-    const { id, status, customerPhone } = req.body || {};
-    if (!id || !status) {
-      return res.status(400).json({ error: 'Order ID and new status required.' });
+    const { id, ref, status, customerPhone } = req.body || {};
+    if ((!id && !ref) || !status) {
+      return res.status(400).json({ error: 'Order ID or reference and new status required.' });
     }
 
-    const orderIndex = (data.orders || []).findIndex(o => o.id === id);
+    const orderIndex = (data.orders || []).findIndex(o => 
+      (id && o.id === id) || 
+      (ref && String(o.ref || '').toUpperCase() === String(ref).trim().toUpperCase())
+    );
     if (orderIndex === -1) {
       return res.status(404).json({ error: 'Order not found.' });
     }
@@ -114,11 +123,18 @@ module.exports = async function handler(req, res) {
     // Customer self-cancellation
     if (status === 'Cancelled' && customerPhone) {
       const cleanPhone = String(customerPhone).replace(/\D/g, '').slice(-10);
-      if (order.c.phone === cleanPhone && (order.status === 'New' || order.status === 'Confirmed')) {
-        order.status = 'Cancelled';
-        order.by = 'customer';
-        await writeData(data);
-        return res.status(200).json({ ok: true, order });
+      const oPhone = String(order.c && order.c.phone ? order.c.phone : '').replace(/\D/g, '').slice(-10);
+      if (oPhone === cleanPhone) {
+        if (order.status === 'New' || order.status === 'Confirmed') {
+          order.status = 'Cancelled';
+          order.by = 'customer';
+          await writeData(data);
+          return res.status(200).json({ ok: true, order });
+        } else {
+          return res.status(400).json({ error: 'This order is already ' + order.status.toLowerCase() + ' and cannot be cancelled online.' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Phone number does not match order record.' });
       }
     }
 

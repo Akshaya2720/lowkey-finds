@@ -33,8 +33,8 @@ module.exports = async function handler(req, res) {
 
   // Privacy Rule: Strict match on BOTH ref and customer phone number
   const match = orders.find(o => 
-    o.ref === cleanRef && 
-    String(o.c.phone).replace(/\D/g, '').slice(-10) === cleanPhone
+    String(o.ref || '').trim().toUpperCase() === cleanRef && 
+    String(o.c && o.c.phone ? o.c.phone : '').replace(/\D/g, '').slice(-10) === cleanPhone
   );
 
   if (!match) {
@@ -56,8 +56,9 @@ module.exports = async function handler(req, res) {
       ship: match.ship,
       total: match.total,
       c: {
-        name: match.c.name,
-        city: match.c.city
+        name: match.c && match.c.name ? match.c.name : 'Customer',
+        city: match.c && match.c.city ? match.c.city : '',
+        phone: cleanPhone
       }
     }
   });
