@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 34,
+  "rev": 35,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -232,7 +232,7 @@
       "id": "o_cancel_456",
       "ref": "LF-CANCEL1",
       "at": 1795338631546,
-      "status": "New",
+      "status": "Cancelled",
       "c": {
         "name": "Cancel User",
         "phone": "9876543210",
@@ -251,7 +251,8 @@
       ],
       "sub": 999,
       "ship": 0,
-      "total": 999
+      "total": 999,
+      "by": "customer"
     },
     {
       "id": "o_test_123",
