@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 32,
+  "rev": 33,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -232,7 +232,7 @@
       "id": "o_test_123",
       "ref": "LF-TEST99",
       "at": 1795338627847,
-      "status": "New",
+      "status": "Packed",
       "c": {
         "name": "Test User",
         "phone": "9876543210",
