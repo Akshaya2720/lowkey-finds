@@ -580,14 +580,29 @@ function placeOrder(){
   try{sessionStorage.setItem('lf_track',JSON.stringify({ref:ord.ref,ph:o.phone.replace(/\D/g,'').slice(-10)}))}catch(e){}
   cart=[];saveCart();
 
-  var waNum = (cur().settings.whatsapp||'').replace(/\D/g,'');
+  var st = cur().settings || {};
+  var waNum = (st.whatsapp||'').replace(/\D/g,'');
+  var igHandle = (st.instagram||'').trim().replace(/^@/,'');
+  var igUrl = igHandle ? ('https://instagram.com/' + igHandle) : '';
   var waSummary = orderText(ord);
   window.__lastOrd = ord;
   window.__ord = waSummary;
   var waUrl = waNum ? ('https://wa.me/' + waNum + '?text=' + encodeURIComponent(waSummary)) : '';
 
+  var noteHtml = '<div style="background:#FFF9C4;border:2px solid #FBC02D;color:#212121;padding:12px 14px;border-radius:10px;margin:14px 0;text-align:left">'+
+    '<div style="font-weight:900;font-size:0.92rem;display:flex;align-items:center;gap:6px;color:#D84315;letter-spacing:0.3px">'+
+      '<span>\u26A0\uFE0F IMPORTANT NOTE</span>'+
+    '</div>'+
+    '<p style="margin:6px 0 0;font-size:0.88rem;line-height:1.45;font-weight:600">'+
+      'Please <b>take a screenshot</b> of this screen and send it for <b>double verification</b>'+
+      (igHandle ? ' on Instagram <a href="'+igUrl+'" target="_blank" rel="noopener" style="color:#0149AB;font-weight:800;text-decoration:underline">@'+esc(igHandle)+'</a>' : ' on Instagram')+
+      (waNum ? ' or on number <b>+'+esc(waNum)+'</b>' : ' or on our official number')+
+      '.</p>'+
+  '</div>';
+
   layer('<div class="ov right" data-act="ovclose"><aside class="drawer" role="dialog" aria-modal="true" aria-label="Order placed"><div class="dh"><h3 class="skew">Order placed</h3><button class="x" data-act="close" aria-label="Close">&times;</button></div><div class="db"><div class="okbox"><h3 class="skew">Thank you!</h3><p>Your order <b>'+esc(ord.ref)+'</b> has reached us, '+esc(o.name)+'. We will contact you on '+esc(o.phone)+' to confirm it.</p>'+
-  (waUrl ? '<a class="btn yel" href="'+waUrl+'" target="_blank" rel="noopener" style="width:100%;margin-bottom:12px;text-decoration:none;display:inline-flex;gap:8px"><span>Confirm via WhatsApp 💬</span></a>' : '')+
+  noteHtml+
+  (waUrl ? '<a class="btn yel" href="'+waUrl+'" target="_blank" rel="noopener" style="width:100%;margin-bottom:12px;text-decoration:none;display:inline-flex;gap:8px"><span>Confirm via WhatsApp \uD83D\uDCAC</span></a>' : '')+
   '<button class="btn" style="width:100%" data-act="track">Track this order</button><button class="btn ghost" style="width:100%;margin-top:10px" data-act="close-all">Keep shopping</button></div></div></aside></div>');
 }
 
@@ -787,33 +802,40 @@ async function omut(id,fn){
   // Sync to API
   try {
     if(updatedOrder){
-      fetch('/api/orders', {
+      var r = await fetch('/api/orders', {
         method: 'PATCH',
         headers: {'Content-Type': 'application/json', 'x-admin-token': getAdminToken()},
         body: JSON.stringify({id: id, status: updatedOrder.status})
       });
+      if(r.ok) toast('Status updated: ' + updatedOrder.status);
     } else {
-      fetch('/api/orders', {
+      var r = await fetch('/api/orders', {
         method: 'DELETE',
         headers: {'Content-Type': 'application/json', 'x-admin-token': getAdminToken()},
         body: JSON.stringify({id: id})
       });
+      if(r.ok) toast('Order deleted');
     }
   } catch(e){}
 }
 /* ---------- customer order tracking (own order only: number + phone) ---------- */
+function renderRecentOrdersHtml(list){
+  if(!list || !list.length) return '';
+  return list.slice(0, 5).map(function(mo){
+    var cph = (mo.c && mo.c.phone ? mo.c.phone : '');
+    return '<button class="ord-c" style="width:100%;text-align:left;cursor:pointer;margin:0;display:block" data-act="quicktrack" data-ref="'+esc(mo.ref)+'" data-ph="'+esc(cph)+'">'+
+      '<div class="r"><b>'+esc(mo.ref)+'</b><span class="adm-pill" style="font-size:.7rem">'+esc(mo.status)+'</span></div>'+
+      '<div style="font-size:.85rem;color:var(--muted);margin-top:4px">'+new Date(mo.at).toLocaleDateString('en-IN')+' &middot; '+inr(mo.total)+' &middot; '+mo.items.length+' item(s)</div>'+
+    '</button>';
+  }).join('');
+}
 function openTrack(){
   var t={};try{t=JSON.parse(sessionStorage.getItem('lf_track'))||{}}catch(e){}
   myOrders = ls.get('lf_my_orders', []);
   var myOrdersHtml = '';
   if(myOrders && myOrders.length){
-    myOrdersHtml = '<div style="margin-top:20px;border-top:2px dashed var(--line);padding-top:14px"><h4 class="disp" style="font-size:1.2rem;margin:0 0 10px">Your Recent Orders</h4><div style="display:grid;gap:8px">'+
-      myOrders.slice(0, 5).map(function(mo){
-        return '<button class="ord-c" style="width:100%;text-align:left;cursor:pointer;margin:0;display:block" data-act="quicktrack" data-ref="'+esc(mo.ref)+'" data-ph="'+esc(mo.c.phone)+'">'+
-          '<div class="r"><b>'+esc(mo.ref)+'</b><span class="adm-pill" style="font-size:.7rem">'+esc(mo.status)+'</span></div>'+
-          '<div style="font-size:.85rem;color:var(--muted);margin-top:4px">'+new Date(mo.at).toLocaleDateString('en-IN')+' &middot; '+inr(mo.total)+' &middot; '+mo.items.length+' item(s)</div>'+
-        '</button>';
-      }).join('')+
+    myOrdersHtml = '<div style="margin-top:20px;border-top:2px dashed var(--line);padding-top:14px"><h4 class="disp" style="font-size:1.2rem;margin:0 0 10px">Your Recent Orders</h4><div id="my-orders-list" style="display:grid;gap:8px">'+
+      renderRecentOrdersHtml(myOrders)+
     '</div></div>';
   }
 
@@ -828,39 +850,54 @@ async function showTrack(){
     return;
   }
   
-  // PRIVACY VERIFICATION:
-  // 1. Look in customer's local orders first
-  myOrders = ls.get('lf_my_orders', []);
-  var o = myOrders.find(function(x){return x.ref===r && x.c.phone.replace(/\D/g,'').slice(-10)===p});
-  
-  // 2. Also check API
-  if(!o){
-    box.innerHTML='<div class="empty">Looking up your order status...</div>';
-    try {
-      var resp = await fetch('/api/track', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ref: r, phone: p})
-      });
-      if(resp.ok){
-        var resData = await resp.json();
-        if(resData && resData.order) o = resData.order;
+  box.innerHTML='<div class="empty">Looking up latest order status...</div>';
+  var o = null;
+
+  // 1. Fetch live status from cloud API
+  try {
+    var resp = await fetch('/api/track', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      cache: 'no-store',
+      body: JSON.stringify({ref: r, phone: p})
+    });
+    if(resp.ok){
+      var resData = await resp.json();
+      if(resData && resData.order){
+        o = resData.order;
+        // Keep customer's local storage up to date with live status
+        myOrders = ls.get('lf_my_orders', []);
+        var idx = myOrders.findIndex(function(x){return x.ref===r});
+        if(idx > -1){
+          myOrders[idx].status = o.status;
+          if(o.by) myOrders[idx].by = o.by;
+          ls.set('lf_my_orders', myOrders);
+          var mlist = $('#my-orders-list');
+          if(mlist) mlist.innerHTML = renderRecentOrdersHtml(myOrders);
+        }
       }
-    } catch(e){}
+    }
+  } catch(e){}
+
+  // 2. Fallback: check local myOrders if network unavailable
+  if(!o){
+    myOrders = ls.get('lf_my_orders', []);
+    o = myOrders.find(function(x){return x.ref===r && x.c && x.c.phone && x.c.phone.replace(/\D/g,'').slice(-10)===p});
   }
 
-  // Fallback: for admin testing on the same device, check S.orders
-  // but only if the user is admin (prevents leaking other customers' orders)
+  // 3. Fallback: for admin testing on the same device, check S.orders
   if(!o && isAdmin && S && S.orders){
-    o = S.orders.find(function(x){return x.ref===r && x.c.phone.replace(/\D/g,'').slice(-10)===p});
+    o = S.orders.find(function(x){return x.ref===r && x.c && x.c.phone && x.c.phone.replace(/\D/g,'').slice(-10)===p});
   }
 
   if(!o){box.innerHTML='<div class="empty">No order found with this order number and phone. Check your details.</div>';return}
   try{sessionStorage.setItem('lf_track',JSON.stringify({ref:r,ph:p}))}catch(e){}
   var steps=['New','Confirmed','Packed','Shipped','Delivered'],ix=steps.indexOf(o.status),can=o.status==='New'||o.status==='Confirmed';
+  var verifyReminder = (o.status==='New'||o.status==='Confirmed') ? '<div style="background:#FFF9C4;border:1px solid #FBC02D;color:#212121;padding:8px 10px;border-radius:6px;margin:8px 0;font-size:0.82rem;line-height:1.4"><b>\uD83D\uDCF8 Double Verification:</b> Please send a screenshot of this order on Instagram or WhatsApp.</div>' : '';
   box.innerHTML='<div class="ord-c"><div class="r"><b>'+esc(o.ref)+'</b><span class="hint">'+new Date(o.at).toLocaleString('en-IN')+'</span></div>'+
    (o.status==='Cancelled'?'<p class="notice">This order was cancelled.</p>':'<div style="display:grid;gap:8px;margin:12px 0">'+steps.map(function(s,i){var on=i<=ix;return '<div style="display:flex;gap:10px;align-items:center;font-weight:'+(i===ix?800:600)+';opacity:'+(on?1:.45)+'"><span style="width:16px;height:16px;border-radius:50%;border:2px solid var(--blue);background:'+(on?'var(--yellow)':'transparent')+'"></span>'+(s==='New'?'Order received':s==='Delivered'?'Delivered (completed)':s)+'</div>'}).join('')+'</div>')+
-   '<ul>'+o.items.map(function(it){return '<li>'+esc(it.n)+(it.s?' ('+esc(it.s)+')':'')+' &times; '+it.q+'</li>'}).join('')+'</ul><div class="r"><b>Total '+inr(o.total)+'</b>'+(can?'<button class="btn danger sm" data-act="ocancel" data-id="'+o.id+'">Cancel order</button>':'')+'</div>'+((o.status==='Packed'||o.status==='Shipped')?'<p class="hint">This order is already packed, so it cannot be cancelled here. Contact the shop.</p>':'')+'</div>';
+   verifyReminder+
+   '<ul>'+o.items.map(function(it){return '<li>'+esc(it.n)+(it.s?' ('+esc(it.s)+')':'')+' &times; '+it.q+'</li>'}).join('')+'</ul><div class="r"><b>Total '+inr(o.total)+'</b>'+(can?'<button class="btn danger sm" data-act="ocancel" data-id="'+o.id+'" data-ref="'+esc(o.ref)+'" data-ph="'+esc((o.c&&o.c.phone)||p)+'">Cancel order</button>':'')+'</div>'+((o.status==='Packed'||o.status==='Shipped')?'<p class="hint">This order is already packed, so it cannot be cancelled here. Contact the shop.</p>':'')+'</div>';
 }
 setInterval(function(){if(isAdmin)beat();syncLogin()},8000);
 window.addEventListener('storage',function(e){
@@ -918,7 +955,33 @@ document.addEventListener('click',function(ev){
     showTrack();
     return;
   }
-  if(a==='ocancel'){if(confirm('Cancel this order?')){S=loadS();var oo=S.orders.find(function(x){return x.id===el.dataset.id});if(oo&&(oo.status==='New'||oo.status==='Confirmed')){oo.status='Cancelled';oo.by='customer';saveStore();toast('Order cancelled')}showTrack();renderAdminBar()}return}
+  if(a==='ocancel'){
+    if(confirm('Cancel this order?')){
+      var oid = el.dataset.id, oref = el.dataset.ref, oph = el.dataset.ph || ($('#t-ph') ? $('#t-ph').value.replace(/\D/g, '').slice(-10) : '');
+      if(isAdmin){
+        omut(oid, function(l, i){ l[i].status = 'Cancelled'; });
+        toast('Order cancelled');
+        showTrack();
+      } else {
+        fetch('/api/orders', {
+          method: 'PATCH',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({id: oid, status: 'Cancelled', customerPhone: oph})
+        }).then(function(r){
+          if(r.ok){
+            var mos = ls.get('lf_my_orders', []);
+            var ci = mos.findIndex(function(x){return x.id === oid || x.ref === oref});
+            if(ci > -1){ mos[ci].status = 'Cancelled'; mos[ci].by = 'customer'; ls.set('lf_my_orders', mos); }
+            toast('Order cancelled');
+            showTrack();
+          } else {
+            toast('Could not cancel order');
+          }
+        }).catch(function(){ toast('Could not cancel order'); });
+      }
+    }
+    return;
+  }
   if(a==='login'){openLogin();return}
   if(a==='dologin'){doLogin();return}
   /* admin */
@@ -1025,6 +1088,49 @@ async function syncFromCloud(){
           }
         }
       }catch(e){}
+    }
+    /* --- customer: periodically sync status of their recent orders --- */
+    if(!isAdmin){
+      var custOrders = ls.get('lf_my_orders', []);
+      var pending = (custOrders || []).filter(function(x){
+        return x && x.status !== 'Delivered' && x.status !== 'Cancelled';
+      }).slice(0, 3);
+      if(pending.length > 0){
+        for(var pi=0; pi<pending.length; pi++){
+          (async function(po){
+            try{
+              var ph = (po.c && po.c.phone ? po.c.phone : '').replace(/\D/g, '').slice(-10);
+              if(!po.ref || ph.length !== 10) return;
+              var tr = await fetch('/api/track', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                cache: 'no-store',
+                body: JSON.stringify({ref: po.ref, phone: ph})
+              });
+              if(tr.ok){
+                var td = await tr.json();
+                if(td && td.order && td.order.status && td.order.status !== po.status){
+                  var curList = ls.get('lf_my_orders', []);
+                  var ci = curList.findIndex(function(x){return x.ref === po.ref});
+                  if(ci > -1){
+                    curList[ci].status = td.order.status;
+                    if(td.order.by) curList[ci].by = td.order.by;
+                    ls.set('lf_my_orders', curList);
+                  }
+                  toast('Order ' + po.ref + ' is now ' + td.order.status + '! \uD83D\uDCE6');
+                  var mlist = $('#my-orders-list');
+                  if(mlist) mlist.innerHTML = renderRecentOrdersHtml(curList);
+                  var tbox = $('#tres');
+                  var tRefInput = $('#t-ref');
+                  if(tbox && tRefInput && tRefInput.value.trim().toUpperCase() === po.ref){
+                    showTrack();
+                  }
+                }
+              }
+            }catch(e){}
+          })(pending[pi]);
+        }
+      }
     }
   } catch(e){
   } finally {

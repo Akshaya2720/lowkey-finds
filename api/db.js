@@ -122,6 +122,43 @@ async function saveToGitHub(data) {
     } else {
       const errText = await putRes.text();
       console.error('GitHub PUT failed:', putRes.status, errText);
+      if (putRes.status === 409 || putRes.status === 422) {
+        try {
+          const refetchRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_PATH}?t=${Date.now()}`, {
+            headers: {
+              'Authorization': `token ${GITHUB_TOKEN}`,
+              'User-Agent': 'Lowkey-App',
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          });
+          if (refetchRes.ok) {
+            const refetchJson = await refetchRes.json();
+            currentSha = refetchJson.sha;
+            const retryPut = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_PATH}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'User-Agent': 'Lowkey-App',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                message: 'Update store data via admin',
+                content: contentBase64,
+                sha: currentSha
+              })
+            });
+            if (retryPut.ok) {
+              const retryJson = await retryPut.json();
+              if (retryJson && retryJson.content && retryJson.content.sha) {
+                currentSha = retryJson.content.sha;
+              }
+              return true;
+            }
+          }
+        } catch (re) {
+          console.error('GitHub retry failed:', re.message);
+        }
+      }
     }
   } catch (err) {
     console.error('Error saving to GitHub:', err.message);
@@ -184,7 +221,11 @@ async function writeData(data) {
   } catch (e) {}
 
   // Commit to GitHub cloud
-  saveToGitHub(data).catch(err => console.error('Background GitHub save error:', err));
+  try {
+    await saveToGitHub(data);
+  } catch (err) {
+    console.error('GitHub save error:', err);
+  }
   return true;
 }
 
