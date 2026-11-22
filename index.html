@@ -555,10 +555,12 @@ function placeOrder(){
   myOrders.unshift(ord);
   ls.set('lf_my_orders', myOrders);
 
-  // Also sync to admin store if admin is running on this device
-  S.orders = S.orders || [];
-  S.orders.unshift(ord);
-  saveStore();
+  // NOTE: We do NOT put this order into S.orders / lf_store.
+  // S.orders is populated only for the authenticated admin via /api/orders.
+  // Storing orders in the shared lf_store leaks one customer's orders to other
+  // customers who use the same browser. The order already lives in:
+  //   • lf_my_orders  → this customer's private local list
+  //   • /api/orders   → server-side, visible only to admin
 
   // Post securely to /api/orders
   try {
@@ -847,8 +849,9 @@ async function showTrack(){
     } catch(e){}
   }
 
-  // 3. Fallback to S.orders (for admin testing on same device)
-  if(!o && S && S.orders){
+  // Fallback: for admin testing on the same device, check S.orders
+  // but only if the user is admin (prevents leaking other customers' orders)
+  if(!o && isAdmin && S && S.orders){
     o = S.orders.find(function(x){return x.ref===r && x.c.phone.replace(/\D/g,'').slice(-10)===p});
   }
 
