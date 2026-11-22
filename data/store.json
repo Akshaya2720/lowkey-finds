@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 35,
+  "rev": 36,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -227,57 +227,5 @@
       "demo": true
     }
   ],
-  "orders": [
-    {
-      "id": "o_cancel_456",
-      "ref": "LF-CANCEL1",
-      "at": 1795338631546,
-      "status": "Cancelled",
-      "c": {
-        "name": "Cancel User",
-        "phone": "9876543210",
-        "addr": "456 Cancel Ave",
-        "city": "Mumbai",
-        "pin": "400001",
-        "note": ""
-      },
-      "items": [
-        {
-          "n": "Cancel Item",
-          "s": "L",
-          "q": 1,
-          "pr": 999
-        }
-      ],
-      "sub": 999,
-      "ship": 0,
-      "total": 999,
-      "by": "customer"
-    },
-    {
-      "id": "o_test_123",
-      "ref": "LF-TEST99",
-      "at": 1795338627847,
-      "status": "Packed",
-      "c": {
-        "name": "Test User",
-        "phone": "9876543210",
-        "addr": "123 Test St",
-        "city": "Bangalore",
-        "pin": "560001",
-        "note": ""
-      },
-      "items": [
-        {
-          "n": "Test Item",
-          "s": "M",
-          "q": 1,
-          "pr": 500
-        }
-      ],
-      "sub": 500,
-      "ship": 0,
-      "total": 500
-    }
-  ]
+  "orders": []
 }
