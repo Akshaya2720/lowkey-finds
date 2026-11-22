@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 30,
+  "rev": 31,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -227,31 +227,5 @@
       "demo": true
     }
   ],
-  "orders": [
-    {
-      "id": "omwrlub46pjdq",
-      "ref": "LF-RLUB46",
-      "at": 1795337917638,
-      "status": "Packed",
-      "c": {
-        "name": "vhjk",
-        "phone": "5845411547",
-        "addr": "mvhjydufjvh",
-        "city": "wefrgthju",
-        "pin": "421023",
-        "note": ""
-      },
-      "items": [
-        {
-          "n": "American Chaos",
-          "s": "L",
-          "q": 1,
-          "pr": 699
-        }
-      ],
-      "sub": 699,
-      "ship": 0,
-      "total": 699
-    }
-  ]
+  "orders": []
 }
