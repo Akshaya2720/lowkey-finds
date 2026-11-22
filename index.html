@@ -1000,6 +1000,29 @@ async function syncFromCloud(){
         }
       }
     }
+    /* --- admin: also sync orders from cloud --- */
+    if(isAdmin && tok){
+      try{
+        var oRes = await fetch('/api/orders', {
+          cache: 'no-store',
+          headers: {'x-admin-token': tok}
+        });
+        if(oRes.ok){
+          var oData = await oRes.json();
+          if(oData && Array.isArray(oData.orders)){
+            var prevLen = S.orders.length;
+            if(JSON.stringify(oData.orders) !== JSON.stringify(S.orders)){
+              S.orders = oData.orders;
+              saveStore();
+              var olist = $('#olist');
+              if(olist) olist.innerHTML = ordHtml();
+              renderAdminBar();
+              if(oData.orders.length > prevLen) toast('New order received \uD83D\uDCE6');
+            }
+          }
+        }
+      }catch(e){}
+    }
   } catch(e){
   } finally {
     isSyncing = false;
