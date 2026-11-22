@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 29,
+  "rev": 30,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -252,31 +252,6 @@
       "sub": 699,
       "ship": 0,
       "total": 699
-    },
-    {
-      "id": "omwrldv9njkf8",
-      "ref": "LF-RLDV9N",
-      "at": 1795337150603,
-      "status": "Packed",
-      "c": {
-        "name": "vhjk",
-        "phone": "5845411547",
-        "addr": "mvhjydufjvh",
-        "city": "wefrgthju",
-        "pin": "421023",
-        "note": ""
-      },
-      "items": [
-        {
-          "n": "Everyday Tote",
-          "s": "",
-          "q": 1,
-          "pr": 899
-        }
-      ],
-      "sub": 899,
-      "ship": 0,
-      "total": 899
     }
   ]
 }
