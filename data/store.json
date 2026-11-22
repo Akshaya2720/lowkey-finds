@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 27,
+  "rev": 28,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -277,31 +277,6 @@
       "sub": 899,
       "ship": 0,
       "total": 899
-    },
-    {
-      "id": "omwrl9q0vgnbk",
-      "ref": "LF-RL9Q0V",
-      "at": 1795336957183,
-      "status": "Shipped",
-      "c": {
-        "name": "Akshay",
-        "phone": "5864319854",
-        "addr": "Mezhayhur",
-        "city": "Apdhs",
-        "pin": "137592",
-        "note": ""
-      },
-      "items": [
-        {
-          "n": "Linen Camp Shirt",
-          "s": "",
-          "q": 1,
-          "pr": 1299
-        }
-      ],
-      "sub": 1299,
-      "ship": 0,
-      "total": 1299
     }
   ]
 }
