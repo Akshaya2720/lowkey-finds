@@ -1,6 +1,6 @@
 {
   "init": true,
-  "rev": 40,
+  "rev": 41,
   "settings": {
     "whatsapp": "",
     "instagram": "",
@@ -228,6 +228,31 @@
     }
   ],
   "orders": [
+    {
+      "id": "omwrrstqrh12",
+      "ref": "LF-RRSTQR",
+      "at": 1795347927488,
+      "status": "New",
+      "c": {
+        "name": "akssh",
+        "phone": "8850862568",
+        "addr": "Namminipurath House, Mezhathur, Thrithala, Palakkad.",
+        "city": "Pattambi",
+        "pin": "679534",
+        "note": ""
+      },
+      "items": [
+        {
+          "n": "Linen Camp Shirt",
+          "s": "",
+          "q": 1,
+          "pr": 1299
+        }
+      ],
+      "sub": 1299,
+      "ship": 0,
+      "total": 1299
+    },
     {
       "id": "omwrrqthrxo0",
       "ref": "LF-RRQTHR",
